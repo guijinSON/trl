@@ -20,6 +20,7 @@ from typing import Any, Callable, Optional, Sized, Union
 from unittest.mock import patch
 
 import torch
+import pandas as pd
 import torch.utils.data
 import transformers
 from accelerate.utils import broadcast_object_list, gather, gather_object
