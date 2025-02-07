@@ -331,7 +331,7 @@ class GRPOTrainer(Trainer):
                     f"divisible by the number of generations per prompt ({self.num_generations}). Given the current "
                     f"eval batch size, the valid values for the number of generations are: {possible_values}."
                 )
-
+        
         if self.use_vllm:
             if not is_vllm_available():
                 raise ImportError(
@@ -465,6 +465,7 @@ class GRPOTrainer(Trainer):
             prompt_mask = prompt_mask[:, -self.max_prompt_length :]
 
         # Generate completions using either vLLM or regular generation
+        table = defaultdict(list)
         if self.args.use_vllm:
             # First, have main process load weights if needed
             if self.state.global_step != self._last_loaded_step:
@@ -482,9 +483,13 @@ class GRPOTrainer(Trainer):
 
             # Generate completions using vLLM: gather all prompts and use them in a single call in the main process
             all_prompts_text = gather_object(prompts_text)
+            table['query'].extend(all_prompts_text)
             if self.accelerator.is_main_process:
                 outputs = self.llm.generate(all_prompts_text, sampling_params=self.sampling_params, use_tqdm=False)
                 completion_ids = [out.token_ids for completions in outputs for out in completions.outputs]
+                table['response'].extend(
+                    [output.outputs[0].text for output in outputs]
+                )
             else:
                 completion_ids = [None] * len(all_prompts_text)
             # Broadcast the completions from the main process to all processes, ensuring each process receives its
@@ -597,7 +602,16 @@ class GRPOTrainer(Trainer):
 
         self._metrics["reward"].append(rewards.mean().item())
         self._metrics["reward_std"].append(std_grouped_rewards.mean().item())
+        # table['rewards'] = rewards
+        df = pd.DataFrame(table)
+        if self.accelerator.is_main_process:
+            print_rich_table(df.iloc[0 : 0 + 5])
+            if "wandb" in args.report_to:
+                import wandb
 
+                if wandb.run is not None:
+                    wandb.log({"completions": wandb.Table(dataframe=df)})
+        
         return {
             "prompt_ids": prompt_ids,
             "prompt_mask": prompt_mask,
