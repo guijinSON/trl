@@ -607,7 +607,7 @@ class GRPOTrainer(Trainer):
         df = pd.DataFrame(table)
         if self.accelerator.is_main_process:
             print_rich_table(df.iloc[0 : 0 + 5])
-            if "wandb" in args.report_to:
+            if is_wandb_available():
                 import wandb
 
                 if wandb.run is not None:
