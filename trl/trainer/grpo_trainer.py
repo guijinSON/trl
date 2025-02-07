@@ -48,7 +48,7 @@ from ..import_utils import is_vllm_available
 from ..models import create_reference_model, prepare_deepspeed, unwrap_model_for_generation
 from .callbacks import SyncRefModelCallback
 from .grpo_config import GRPOConfig
-from .utils import generate_model_card, get_comet_experiment_url, pad
+from .utils import generate_model_card, get_comet_experiment_url, pad, print_rich_table
 
 
 if is_peft_available():
