@@ -609,7 +609,7 @@ class GRPOTrainer(Trainer):
             try:
                 print_rich_table(df.iloc[0 : 0 + 5])
             except:
-                continue
+                pass
             if is_wandb_available():
                 import wandb
 
