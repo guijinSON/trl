@@ -606,7 +606,10 @@ class GRPOTrainer(Trainer):
         # table['rewards'] = rewards
         df = pd.DataFrame(table)
         if self.accelerator.is_main_process:
-            print_rich_table(df.iloc[0 : 0 + 5])
+            try:
+                print_rich_table(df.iloc[0 : 0 + 5])
+            except:
+                continue
             if is_wandb_available():
                 import wandb
 
